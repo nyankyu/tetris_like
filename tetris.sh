@@ -4,7 +4,7 @@
 #  global
 ####################
 score_value=0
-
+next_block=0
 
 ####################
 #  block data
@@ -40,6 +40,30 @@ b3_00=0 b3_10=0 b3_20=0 b3_30=0
 b3_01=0 b3_11=1 b3_21=0 b3_31=0
 b3_02=1 b3_12=1 b3_22=1 b3_32=0
 b3_03=0 b3_13=0 b3_23=0 b3_33=0
+
+b4_color='\e[44m\c'
+b4_00=0 b4_10=0 b4_20=0 b4_30=0
+b4_01=0 b4_11=1 b4_21=1 b4_31=0
+b4_02=0 b4_12=0 b4_22=1 b4_32=1
+b4_03=0 b4_13=0 b4_23=0 b4_33=0
+
+b5_color='\e[45m\c'
+b5_00=0 b5_10=0 b5_20=0 b5_30=0
+b5_01=0 b5_11=1 b5_21=1 b5_31=0
+b5_02=1 b5_12=1 b5_22=0 b5_32=0
+b5_03=0 b5_13=0 b5_23=0 b5_33=0
+
+b6_color='\e[46m\c'
+b6_00=0 b6_10=0 b6_20=0 b6_30=0
+b6_01=0 b6_11=1 b6_21=1 b6_31=0
+b6_02=0 b6_12=1 b6_22=1 b6_32=0
+b6_03=0 b6_13=0 b6_23=0 b6_33=0
+
+b7_color='\e[47m\c'
+b7_00=0 b7_10=0 b7_20=0 b7_30=0
+b7_01=0 b7_11=0 b7_21=0 b7_31=0
+b7_02=1 b7_12=1 b7_22=1 b7_32=1
+b7_03=0 b7_13=0 b7_23=0 b7_33=0
 
 
 ####################
@@ -100,11 +124,11 @@ init_field() {
 	echo '\e[37;40m\c'
 	echo 'NEXT\c'
 
-	echo '\e[47m\c'
-	for ((i = 3; i <= 8; i++)) {
-		cursor 26 $i
-		echo '            \c'
-	}
+	#echo '\e[47m\c'
+	#for ((i = 3; i <= 8; i++)) {
+		#cursor 26 $i
+		#echo '            \c'
+	#}
 
 	cursor 30 10
 	echo '\e[37;40m\c'
@@ -213,6 +237,37 @@ collision() {
 	eval $1=0
 }
 
+fix_blocks() {
+	for ((x = 0; x < 4; x++)) {
+		for ((y = 0; y < 4; y++)) {
+			eval b=\$b0_$x$y
+			if ((b == 1)) {
+				bx=$((b0_x + x * 2))
+				by=$((b0_y + y))
+				eval field_${bx}_${by}=1
+			}
+		}
+	}
+}
+
+new_blocks() {
+	set_currrent_blocks $next_block
+
+	rand next_block 1 7
+	eval color=\$b${next_block}_color
+	for ((x = 0; x < 4; x++)) {
+		for ((y = 0; y < 4; y++)) {
+			cursor $((28 + x * 2)) $((4 + y))
+			eval b=\$b${next_block}_$x$y
+			if (($b == 1)) {
+				echo $color
+			} else {
+				echo '\e[m\c'
+			}
+			echo '  \c'
+		}
+	}
+}
 
 ####################
 #  initialize
@@ -220,16 +275,23 @@ collision() {
 init_tty
 init_field
 
-set_currrent_blocks 3
+rand next_block 1 7
+new_blocks
 
 
 ####################
 #  main loop
 ####################
+last_time=$SECONDS
 while :
 do
-	key='timeout'
-	read -s -k 1 -t 1 key
+	key=j
+	if ((last_time == $SECONDS)) {
+		read -s -k 1 -t 1 key
+	} else {
+		key=j
+		last_time=$SECONDS
+	}
 
 	case "$key" in
 		timeout)
@@ -255,6 +317,9 @@ do
 			collision ret
 			if ((ret == 1)) {
 				((b0_y-=1))
+				put_blocks
+				fix_blocks
+				new_blocks
 			}
 			put_blocks
 			;;
