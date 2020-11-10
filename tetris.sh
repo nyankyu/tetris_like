@@ -6,6 +6,7 @@
 score_value=0
 next_block=0
 
+
 ####################
 #  block data
 ####################
@@ -123,12 +124,6 @@ init_field() {
 	cursor 30 2
 	echo '\e[37;40m\c'
 	echo 'NEXT\c'
-
-	#echo '\e[47m\c'
-	#for ((i = 3; i <= 8; i++)) {
-		#cursor 26 $i
-		#echo '            \c'
-	#}
 
 	cursor 30 10
 	echo '\e[37;40m\c'
@@ -269,6 +264,7 @@ new_blocks() {
 	}
 }
 
+
 ####################
 #  initialize
 ####################
@@ -294,11 +290,6 @@ do
 	}
 
 	case "$key" in
-		timeout)
-			# test rand()
-			#rand var 1 100
-			#add_score $var
-			;;
 		q)
 			break
 			;;
