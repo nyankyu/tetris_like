@@ -4,8 +4,9 @@
 #  global
 ####################
 score_value=0
+current_block=0
 next_block=0
-
+score_array=(100 300 700 1500 5)
 
 ####################
 #  block data
@@ -138,8 +139,10 @@ init_field() {
 	cursor 1 1
 }
 
+# $1 1:100, 2:300, 3:700, 4:1500, 5:5
 add_score() {
-	((score_value += $1))
+	eval var=\$score_array\[$1\]
+	((score_value += var))
 	cursor 28 11
 	echo '\e[30;47m\c'
 	printf '%8d' $score_value
@@ -156,6 +159,7 @@ rand() {
 
 # $1 block type [1, 7]
 set_currrent_blocks() {
+	current_block=$1
 	eval b0_color=\$b$1_color
 	for ((x = 0; x < 4; x++)) {
 		for ((y = 0; y < 4; y++)) {
@@ -177,6 +181,7 @@ put_blocks() {
 			if (($b == 1)) echo '  \c'
 		}
 	}
+	cursor 1 1
 }
 
 rm_blocks() {
@@ -188,6 +193,7 @@ rm_blocks() {
 			if (($b == 1)) echo '  \c'
 		}
 	}
+	cursor 1 1
 }
 
 evacuate_blocks() {
@@ -239,7 +245,7 @@ fix_blocks() {
 			if ((b == 1)) {
 				bx=$((b0_x + x * 2))
 				by=$((b0_y + y))
-				eval field_${bx}_${by}=1
+				eval field_${bx}_${by}=${current_block}
 			}
 		}
 	}
@@ -254,14 +260,63 @@ new_blocks() {
 		for ((y = 0; y < 4; y++)) {
 			cursor $((28 + x * 2)) $((4 + y))
 			eval b=\$b${next_block}_$x$y
-			if (($b == 1)) {
+			if ((b == 1)) {
 				echo $color
 			} else {
-				echo '\e[m\c'
+				echo '\e[40m\c'
 			}
 			echo '  \c'
 		}
 	}
+}
+
+del_line() {
+	for ((y = $1; y > 2; y--)) {
+		((y_up = y - 1))
+		for ((x = 3; x <= 21; x+=2)) {
+			eval field_${x}_${y}=\$field_${x}_${y_up}
+		}
+	}
+}
+
+check_line() {
+	for ((x = 3; x <=21; x+=2)) {
+		eval f=\$field_${x}_$1
+		if ((f == 0)) {
+			echo 0
+			return
+		}
+	}
+	echo 1
+}
+
+
+refresh_field() {
+	for ((x = 3; x <= 21; x+=2)) {
+		for ((y = 2; y <= 21; y+=1)) {
+			eval block_type=\$field_${x}_${y}
+			cursor $x $y
+			echo "\e[4${block_type}m  \c"
+		}
+	}
+}
+
+del_aligned_lines() {
+	del_num=0
+	for ((y = 2; y <= 21; y++)) {
+		del=1
+		for ((x = 3; x <=21; x+=2)) {
+			eval f=\$field_${x}_${y}
+			((del *= f))
+		}
+
+		if ((del != 0)) {
+			del_line $y
+			((del_num++))
+		}
+	}
+	refresh_field
+	add_score $del_num
 }
 
 
@@ -281,11 +336,11 @@ new_blocks
 last_time=$SECONDS
 while :
 do
-	key=j
+	key=""
 	if ((last_time == $SECONDS)) {
 		read -s -k 1 -t 1 key
 	} else {
-		key=j
+		key='j'
 		last_time=$SECONDS
 	}
 
@@ -309,10 +364,14 @@ do
 			if ((ret == 1)) {
 				((b0_y-=1))
 				put_blocks
+
 				fix_blocks
+				del_aligned_lines
+
 				new_blocks
 			}
-			put_blocks
+		 	put_blocks
+			add_score 5
 			;;
 		k|A|8)
 			rm_blocks
