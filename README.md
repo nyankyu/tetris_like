@@ -5,14 +5,10 @@ tetris like game in zsh
 
 ![screenshot](https://github.com/nyankyu/tetris_like/blob/images/movie.gif)
 
-move left : h or cursor-left or 4
 
-move right : l or cursor-right or 6
-
-move down : j or cursor-down or 2
-
-roll left : d
-
-roll right : f
-
-quit : q
+- move left : h or cursor-left or 4
+- move right : l or cursor-right or 6
+- move down : j or cursor-down or 2
+- roll left : d
+- roll right : f
+- quit : q
